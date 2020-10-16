@@ -12,19 +12,19 @@ tags: ["tutorial"]
 In a Giant Swarm installation the software managing tenant clusters (the kubernetes clusters that run your workloads)
 is installed in a separate Kubernetes cluster, called `control plane`.
 
-This document will guide you to setup your Azure Subscription to make it possibile to install, operate and upgrade
+This document will guide you through the setup process for your Azure Subscription to make it possibile to install, operate and upgrade
 the Giant Swarm's control plane.
 
 ## Overview
 
-In order to run a Giant Swarm control plane, an Azure subscription needs:
+In order to run a Giant Swarm control plane, you will need:
 
 - to invite Giant Swarm's service principal to the Active Directory your `Subscription` belongs to;
 - to assign Giant Swarm's service principal the `Owner` role in the `Subscription`.
 
 ## Procedure
 
-The process of enabling a service principal involves 4 steps, described below.
+The process of enabling a service principal involves 3 steps, described below.
 
 ### 1. Prerequisites
 
@@ -33,50 +33,7 @@ To create and assign the role to Giant Swarm's Service Principal you need:
 - An account with [Owner](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#owner) or [User Access Administrator](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles#user-access-administrator) role.
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli) installed.
 
-### 2. Create the role definition
-
-Download our Role definition template:
-
-```json
-{
-  "Name": "azure-operator",
-  "Description": "Role for github.com/giantswarm/azure-operator",
-  "Actions": [
-    "*"
-  ],
-  "NotActions": [
-    "Microsoft.Authorization/elevateAccess/Action"
-  ],
-  "AssignableScopes": [
-    "/subscriptions/${SUBSCRIPTION_ID}"
-  ]
-}
-```
-
-Open it and replace `${SUBSCRIPTION_ID}` with your subscription id.
-
-To find out your subscription ID you can use [the Azure portal](https://portal.azure.com/#blade/Microsoft_Azure_Billing/SubscriptionsBlade), as shown in the screenshot below:
-
-![Azure Subscriptions list](/img/azure-subscriptions-list.png)
-
-Alternatively you can use the Azure CLI as follows:
-
-```nohighlight
-$ az account list --output table
-Name     CloudName    SubscriptionId                        State    IsDefault
--------  -----------  ------------------------------------  -------  -----------
-Example  AzureCloud   6ec148b8-8bea-4dd3-82bc-1787c8260e4a  Enabled  True
-```
-
-With the edited role definition in the file `guest.json`, create the role definition using the Azure CLI:
-
-```nohighlight
-az role definition create --role-definition @guest.json
-```
-
-On success this command prints the created role definition.
-
-### 3. Invite Giant Swarm's service principal to your Active Directory. 
+### 2. Invite Giant Swarm's service principal to your Active Directory. 
 
 By visiting the following link you can invite GiantSwarm's Service Principal and authorize it to the Tenant AD on behalf 
 of your organization. You just need to replace `${TENANT_ID}` with your Tenant ID, and `${SERVICE_PRINCIPAL_ID}` with the 
@@ -88,62 +45,8 @@ https://login.microsoftonline.com/${TENANT_ID}/oauth2/authorize?client_id=${SERV
 
 Please note that the above URL will forward you to the `microsoft.com` home page on success. This is intended.
 
-### 4. Assign the right role to the Giant Swarm service principal.
+### 3. Assign the owner role to the Giant Swarm service principal.
 
 Now you need to give Giant Swarm's Service Principal permission to access resources belonging to your subscription. 
 In your subscription, go to "Access Control (IAM)" and click the "Add Role" button, then select "Add role assignment".
-In the right sidebar that pops up, please select the `azure-operator` role.
-
-## Configure the Giant Swarm organization
-
-In the previous section, we explained how to invite the Giant Swarm's Service Principal in your Azure Active Directory and give it 
-access to your subscription.
-
-Giant Swarm tenant clusters are owned by organizations. This allows you to control access to clusters, since only members of the
-owner organization have access to the management functions of a cluster.
-
-In order to run a tenant cluster in your Azure subscription, the organization owning your cluster has to know about the 
-Service Principal you just created.
-
-If you have direct access to the Giant Swarm API, please set the credentials of
-your organization with our [gsctl](/reference/gsctl/) CLI. Look for the
-[`update organization set-credentials`](/reference/gsctl/update-org-set-credentials/#azure)
-command. You will need your Azure subscription ID and the output from step 3 as arguments.
-
-In case you are working with a Giant Swarm partner, you might not have access to the Giant Swarm API. In that case, please provide your Azure subscription ID and the output from step 3 to your partner contact.
-
-After the organization's credentials are set, you can create clusters owned by that
-organization. These clusters' resources will be created in your Azure subscription.
-
-## Configure Subscription to allow access for Giant Swarm Support
-
-Last step while configuring your Subscription is to grant access for Giant Swarm Ops/Support to your subscription in order to provide 24/7 support. Access to the portal is important part of the provided support, where in some cases manual interventions have to take place.
-Easiest way is to use the Azure Lighthouse service, that allows to delegate the management of resources to third parties. While following this part of the guide, you will allow the Giant Swarm Staff group to manage your resources. This is beneficial as you will not have to manage access for each person separately within your subscription, but you will be adding a managed group that is kept up to date with the current active Giant Swarm Staff from our side.
-
-We require a built in role `Contributor` to access the resources that Giant Swarm is deploying and it can be used by default from the [Azure RBAC](https://docs.microsoft.com/en-us/azure/role-based-access-control/built-in-roles).
-
-You can also create your own role assignment with restrictions to access specific Resource Groups, however it needs to be remembered to refresh the role with every newly created cluster so we can provide full support starting from the clusters creation.
-
-When all is set you can simply run this command:
-
-```nohighlight
-az deployment create --name <deploymentName (unique by subscription)> \
-                     --location <AzureRegion> \
-                     --template-file delegatedResourceManagement.json \
-                     --parameters delegatedResourceManagement.parameters.json \
-                     --verbose
-```
-
-You will have to supply a general Delegated Resource Management [template file](https://raw.githubusercontent.com/giantswarm/azure-operator/master/docs/delegatedResourceManagement.json).
-
-The Delegated Resource Management template uses a [parameters file](https://raw.githubusercontent.com/giantswarm/azure-operator/master/docs/delegatedResourceManagement.parameters.json) to supply the needed variables for configuration.
-Please remember to change the `roleDefinitionId` in case you would like to use your custom role definition. Moreover ask your Solution Engineer so he can provide you the `GiantSwarmPrincipalID` and `GiantSwarmTenantID`
-
-This command should be run for all subscriptions that are used for Giant Swarm tenant clusters as well as the control plane that orchestrates it all.  
-
-## Further reading
-
-- [Basics and Concepts: Multi-Account Support](/basics/multi-account/)
-- [gsctl Reference: `update organization set-credentials`](/reference/gsctl/update-org-set-credentials/)
-- [API: Set credentials](/api/#operation/addCredentials)
-- [Azure Lighthouse](https://docs.microsoft.com/en-us/azure/lighthouse/how-to/onboard-customer)
+In the right sidebar that pops up, please select the `Owner` role.
