@@ -40,10 +40,9 @@ It supports the following flags:
 - `--pods-cidr` - CIDR applied to the pods. If you don't set any, the installation default will be applied. Only versions *11.1.4+ support this feature.
 - `--owner` - organization, owning tenant cluster. Must be configured with existing organization in installation.
 - `--release` - valid release version.
-  Can be retrieved with `gsctl list releases` for your installation. Only versions above *10.x.x*+ support cluster CRs.
+  Can be retrieved with `gsctl list releases` for your installation. Only versions above *10.x.x*+ on AWS and *13.x.x*+ on Azure support cluster CRs.
 - `--label` - tenant cluster label in the form of `key=value`. Can be specified multiple times. Only clusters with release version above *10.x.x*+ support tenant cluster labels.
 - `--cluster-id` (optional) - Unique cluster identifier. Must me 5 characters in length, must contain numbers and letters, and match the regular expression `[a-z0-9]{5}`. If not given, an ID will be generated.
-- `--release-branch` (optional) - The Giant Swarm [releases repository](https://github.com/giantswarm/releases) branch to use to look up the release set via the `--release` flag (default: `master`).
 
 ### AWS specific
 
@@ -55,7 +54,6 @@ It supports the following flags:
   three times with a single AZ name.
 - `--credential` - AWS cloud credentials that point to the AWS account used to spin up the cluster resources. To get this info run against the Control Plane API `kubectl -n giantswarm get secret -oyaml | grep ORG_NAME -A2 | tail -n 1 | awk '{print $2}'` replacing `ORG_NAME` for the name of the organization selected.
 - `--external-snat` - AWS CNI configuration to disable (is enabled by default) the [external source network address translation](https://docs.aws.amazon.com/eks/latest/userguide/external-snat.html). Only versions *11.3.1+ support this feature.
-- `--region` - tenant cluster AWS region. Must be configured with installation region.
 
 ## Example
 
@@ -72,7 +70,6 @@ kgs template cluster \
   --owner acme \
   --credential credential-34hg5 \
   --release 11.2.1 \
-  --region eu-central-1 \
   --label environment=testing \
   --label "team=upstate"
 ```
@@ -87,7 +84,6 @@ kind: Cluster
 metadata:
   creationTimestamp: null
   labels:
-    cluster-operator.giantswarm.io/version: 2.1.10
     giantswarm.io/cluster: o4omf
     giantswarm.io/organization: acme
     release.giantswarm.io/version: 11.2.1
@@ -110,7 +106,6 @@ kind: AWSCluster
 metadata:
   creationTimestamp: null
   labels:
-    aws-operator.giantswarm.io/version: 8.4.0
     giantswarm.io/cluster: o4omf
     giantswarm.io/organization: acme
     release.giantswarm.io/version: 11.2.1
@@ -150,7 +145,6 @@ kind: G8sControlPlane
 metadata:
   creationTimestamp: null
   labels:
-    cluster-operator.giantswarm.io/version: 2.1.10
     giantswarm.io/cluster: o4omf
     giantswarm.io/control-plane: osss7
     giantswarm.io/organization: acme
@@ -171,7 +165,6 @@ kind: AWSControlPlane
 metadata:
   creationTimestamp: null
   labels:
-    aws-operator.giantswarm.io/version: 8.4.0
     giantswarm.io/cluster: o4omf
     giantswarm.io/control-plane: osss7
     giantswarm.io/organization: acme
