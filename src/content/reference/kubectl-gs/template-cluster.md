@@ -132,7 +132,7 @@ spec:
     pods:
       cidrBlock: 10.2.0.0/16
       externalSNAT: true
-    region: eu-central-1
+    region: ""
 status:
   cluster:
     id: ""
