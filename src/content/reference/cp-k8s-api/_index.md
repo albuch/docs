@@ -8,4 +8,6 @@ user_questions:
   - What is a Custom Resource Definition (CRD)?
   - What is a Custom Resource (CR)?
   - Where can I find links to Giant Swarm CRs/CRDs?
+owner:
+  - https://github.com/orgs/giantswarm/teams/sig-ux
 ---
